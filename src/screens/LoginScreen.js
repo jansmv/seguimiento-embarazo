@@ -2,10 +2,14 @@ import React, { useState } from "react";
 import {
     ActivityIndicator,
     Alert,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
+    TouchableWithoutFeedback,
     View,
 } from "react-native";
 import { supabase } from "../supabase";
@@ -14,6 +18,7 @@ export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mostrarPassword, setMostrarPassword] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -52,45 +57,61 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>🤰 Seguimiento de Embarazo</Text>
-      <Text style={styles.subtitle}>Inicia sesión o regístrate</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.container}>
+          <Text style={styles.title}>🤰 Seguimiento de Embarazo</Text>
+          <Text style={styles.subtitle}>Inicia sesión o regístrate</Text>
 
-      <Text style={styles.label}>Correo electrónico</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="ejemplo@correo.com"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+          <Text style={styles.label}>Correo electrónico</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="ejemplo@correo.com"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
 
-      <Text style={styles.label}>Contraseña</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Mínimo 6 caracteres"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+          <Text style={styles.label}>Contraseña</Text>
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="Mínimo 6 caracteres"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!mostrarPassword}
+            />
+            <TouchableOpacity
+              onPress={() => setMostrarPassword(!mostrarPassword)}
+            >
+              <Text style={styles.eyeIcon}>
+                {mostrarPassword ? "🙈" : "👁️"}
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-      {loading ? (
-        <ActivityIndicator size="large" color="#e91e8c" />
-      ) : (
-        <>
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>Iniciar sesión</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.buttonOutline}
-            onPress={handleRegister}
-          >
-            <Text style={styles.buttonOutlineText}>Crear cuenta</Text>
-          </TouchableOpacity>
-        </>
-      )}
-    </View>
+          {loading ? (
+            <ActivityIndicator size="large" color="#e91e8c" />
+          ) : (
+            <>
+              <TouchableOpacity style={styles.button} onPress={handleLogin}>
+                <Text style={styles.buttonText}>Iniciar sesión</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.buttonOutline}
+                onPress={handleRegister}
+              >
+                <Text style={styles.buttonOutlineText}>Crear cuenta</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -124,6 +145,18 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     fontSize: 16,
   },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#f48fb1",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+  },
+  passwordInput: { flex: 1, fontSize: 16, paddingVertical: 12 },
+  eyeIcon: { fontSize: 20, paddingLeft: 8 },
   button: {
     backgroundColor: "#e91e8c",
     padding: 14,
