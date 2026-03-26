@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -63,17 +63,37 @@ export default function HomeScreen({ navigation }) {
     await supabase.auth.signOut();
   };
 
+  const EMOJIS = {
+    Feliz: "😊",
+    Cansada: "😴",
+    Ansiosa: "😰",
+    Náuseas: "🤢",
+    Triste: "😢",
+    Tranquila: "😌",
+    Emocionada: "🥰",
+    Irritable: "😤",
+  };
+
+  const semanaActual =
+    registros.length > 0
+      ? Math.max(...registros.map((r) => r.semana_embarazo))
+      : 0;
+
   const renderItem = ({ item }) => (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => navigation.navigate("DetalleRegistro", { registro: item })}
+    >
       <View style={styles.cardHeader}>
         <Text style={styles.cardSemana}>Semana {item.semana_embarazo}</Text>
         <Text style={styles.cardFecha}>{item.fecha}</Text>
       </View>
       <Text style={styles.cardAnimo}>
-        Estado de ánimo: {item.estado_animo || "No registrado"}
+        {EMOJIS[item.estado_animo] || "😐"}{" "}
+        {item.estado_animo || "No registrado"}
       </Text>
       <Text style={styles.cardSintomas} numberOfLines={2}>
-        Síntomas: {item.sintomas || "Ninguno"}
+        🤒 {item.sintomas || "Sin síntomas registrados"}
       </Text>
       <View style={styles.cardActions}>
         <TouchableOpacity
@@ -91,17 +111,41 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.deleteButtonText}>Eliminar</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>🤰 Mis Registros</Text>
+        <View>
+          <Text style={styles.title}>🤰 Mis Registros</Text>
+          {semanaActual > 0 && (
+            <Text style={styles.semanaActual}>
+              Semana actual: {semanaActual}
+            </Text>
+          )}
+        </View>
         <TouchableOpacity onPress={handleLogout}>
           <Text style={styles.logout}>Cerrar sesión</Text>
         </TouchableOpacity>
       </View>
+
+      {semanaActual > 0 && (
+        <View style={styles.progressContainer}>
+          <View style={styles.progressBar}>
+            <View
+              style={[
+                styles.progressFill,
+                { width: `${(semanaActual / 42) * 100}%` },
+              ]}
+            />
+          </View>
+          <Text style={styles.progressText}>
+            Semana {semanaActual} de 42 —{" "}
+            {Math.round((semanaActual / 42) * 100)}%
+          </Text>
+        </View>
+      )}
 
       {loading ? (
         <ActivityIndicator
@@ -145,7 +189,24 @@ const styles = StyleSheet.create({
     backgroundColor: "#e91e8c",
   },
   title: { fontSize: 22, fontWeight: "bold", color: "#fff" },
+  semanaActual: { fontSize: 13, color: "#fce4ec", marginTop: 2 },
   logout: { color: "#fff", fontSize: 14 },
+  progressContainer: {
+    backgroundColor: "#fff",
+    padding: 16,
+    marginHorizontal: 12,
+    marginTop: 12,
+    borderRadius: 12,
+    elevation: 2,
+  },
+  progressBar: {
+    height: 12,
+    backgroundColor: "#fce4ec",
+    borderRadius: 6,
+    marginBottom: 6,
+  },
+  progressFill: { height: 12, backgroundColor: "#e91e8c", borderRadius: 6 },
+  progressText: { fontSize: 13, color: "#888", textAlign: "center" },
   card: {
     backgroundColor: "#fff",
     margin: 12,
@@ -161,7 +222,7 @@ const styles = StyleSheet.create({
   },
   cardSemana: { fontWeight: "bold", fontSize: 16, color: "#c2185b" },
   cardFecha: { color: "#888", fontSize: 14 },
-  cardAnimo: { fontSize: 14, color: "#555", marginBottom: 4 },
+  cardAnimo: { fontSize: 16, color: "#555", marginBottom: 4 },
   cardSintomas: { fontSize: 14, color: "#555", marginBottom: 12 },
   cardActions: { flexDirection: "row", justifyContent: "flex-end", gap: 8 },
   editButton: { backgroundColor: "#f48fb1", padding: 8, borderRadius: 8 },
