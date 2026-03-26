@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -56,17 +56,20 @@ export default function LoginScreen({ navigation }) {
       <Text style={styles.title}>🤰 Seguimiento de Embarazo</Text>
       <Text style={styles.subtitle}>Inicia sesión o regístrate</Text>
 
+      <Text style={styles.label}>Correo electrónico</Text>
       <TextInput
         style={styles.input}
-        placeholder="Correo electrónico"
+        placeholder="ejemplo@correo.com"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
       />
+
+      <Text style={styles.label}>Contraseña</Text>
       <TextInput
         style={styles.input}
-        placeholder="Contraseña"
+        placeholder="Mínimo 6 caracteres"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -111,6 +114,7 @@ const styles = StyleSheet.create({
     color: "#888",
     marginBottom: 32,
   },
+  label: { fontSize: 14, fontWeight: "bold", color: "#555", marginBottom: 6 },
   input: {
     backgroundColor: "#fff",
     borderWidth: 1,
@@ -126,6 +130,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
     marginBottom: 12,
+    marginTop: 8,
   },
   buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
   buttonOutline: {
