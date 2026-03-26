@@ -1,20 +1,37 @@
-import { useState } from "react";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import React, { useState } from "react";
 import {
     ActivityIndicator,
     Alert,
+    Platform,
     ScrollView,
     StyleSheet,
     Text,
     TextInput,
-    TouchableOpacity
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { supabase } from "../supabase";
+
+const ESTADOS_ANIMO = [
+  { emoji: "😊", label: "Feliz" },
+  { emoji: "😴", label: "Cansada" },
+  { emoji: "😰", label: "Ansiosa" },
+  { emoji: "🤢", label: "Náuseas" },
+  { emoji: "😢", label: "Triste" },
+  { emoji: "😌", label: "Tranquila" },
+  { emoji: "🥰", label: "Emocionada" },
+  { emoji: "😤", label: "Irritable" },
+];
 
 export default function FormularioRegistroScreen({ navigation, route }) {
   const registro = route.params?.registro;
   const esEdicion = !!registro;
 
-  const [fecha, setFecha] = useState(registro?.fecha || "");
+  const [fecha, setFecha] = useState(
+    registro?.fecha ? new Date(registro.fecha) : new Date(),
+  );
+  const [mostrarPicker, setMostrarPicker] = useState(false);
   const [semana, setSemana] = useState(
     registro?.semana_embarazo?.toString() || "",
   );
@@ -23,11 +40,9 @@ export default function FormularioRegistroScreen({ navigation, route }) {
   const [notas, setNotas] = useState(registro?.notas || "");
   const [loading, setLoading] = useState(false);
 
+  const fechaFormateada = fecha.toISOString().split("T")[0];
+
   const validar = () => {
-    if (!fecha) {
-      Alert.alert("Error", "La fecha es obligatoria");
-      return false;
-    }
     if (!semana) {
       Alert.alert("Error", "La semana de embarazo es obligatoria");
       return false;
@@ -35,11 +50,6 @@ export default function FormularioRegistroScreen({ navigation, route }) {
     const semanaNum = parseInt(semana);
     if (isNaN(semanaNum) || semanaNum < 1 || semanaNum > 42) {
       Alert.alert("Error", "La semana debe ser un número entre 1 y 42");
-      return false;
-    }
-    const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!fechaRegex.test(fecha)) {
-      Alert.alert("Error", "La fecha debe tener el formato AAAA-MM-DD");
       return false;
     }
     return true;
@@ -54,7 +64,7 @@ export default function FormularioRegistroScreen({ navigation, route }) {
     } = await supabase.auth.getUser();
 
     const datos = {
-      fecha,
+      fecha: fechaFormateada,
       semana_embarazo: parseInt(semana),
       sintomas,
       estado_animo: estadoAnimo,
@@ -90,13 +100,25 @@ export default function FormularioRegistroScreen({ navigation, route }) {
         {esEdicion ? "Editar Registro" : "Nuevo Registro"}
       </Text>
 
-      <Text style={styles.label}>Fecha (AAAA-MM-DD) *</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Ej: 2024-03-15"
-        value={fecha}
-        onChangeText={setFecha}
-      />
+      <Text style={styles.label}>Fecha</Text>
+      <TouchableOpacity
+        style={styles.dateButton}
+        onPress={() => setMostrarPicker(true)}
+      >
+        <Text style={styles.dateButtonText}>📅 {fechaFormateada}</Text>
+      </TouchableOpacity>
+      {mostrarPicker && (
+        <DateTimePicker
+          value={fecha}
+          mode="date"
+          display={Platform.OS === "ios" ? "spinner" : "default"}
+          onChange={(event, selectedDate) => {
+            setMostrarPicker(Platform.OS === "ios");
+            if (selectedDate) setFecha(selectedDate);
+            if (Platform.OS === "android") setMostrarPicker(false);
+          }}
+        />
+      )}
 
       <Text style={styles.label}>Semana de embarazo (1-42) *</Text>
       <TextInput
@@ -108,12 +130,28 @@ export default function FormularioRegistroScreen({ navigation, route }) {
       />
 
       <Text style={styles.label}>Estado de ánimo</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Ej: Feliz, Cansada, Ansiosa..."
-        value={estadoAnimo}
-        onChangeText={setEstadoAnimo}
-      />
+      <View style={styles.emojiContainer}>
+        {ESTADOS_ANIMO.map((item) => (
+          <TouchableOpacity
+            key={item.label}
+            style={[
+              styles.emojiButton,
+              estadoAnimo === item.label && styles.emojiSelected,
+            ]}
+            onPress={() => setEstadoAnimo(item.label)}
+          >
+            <Text style={styles.emoji}>{item.emoji}</Text>
+            <Text
+              style={[
+                styles.emojiLabel,
+                estadoAnimo === item.label && styles.emojiLabelSelected,
+              ]}
+            >
+              {item.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
       <Text style={styles.label}>Síntomas</Text>
       <TextInput
@@ -179,6 +217,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   multiline: { height: 90, textAlignVertical: "top" },
+  dateButton: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#f48fb1",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 16,
+  },
+  dateButtonText: { fontSize: 16, color: "#333" },
+  emojiContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 16,
+  },
+  emojiButton: {
+    alignItems: "center",
+    padding: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#f48fb1",
+    backgroundColor: "#fff",
+    width: "22%",
+  },
+  emojiSelected: { backgroundColor: "#e91e8c", borderColor: "#e91e8c" },
+  emoji: { fontSize: 24 },
+  emojiLabel: { fontSize: 11, color: "#555", marginTop: 2 },
+  emojiLabelSelected: { color: "#fff" },
   button: {
     backgroundColor: "#e91e8c",
     padding: 16,
