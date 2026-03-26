@@ -1,0 +1,200 @@
+import { useState } from "react";
+import {
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity
+} from "react-native";
+import { supabase } from "../supabase";
+
+export default function FormularioRegistroScreen({ navigation, route }) {
+  const registro = route.params?.registro;
+  const esEdicion = !!registro;
+
+  const [fecha, setFecha] = useState(registro?.fecha || "");
+  const [semana, setSemana] = useState(
+    registro?.semana_embarazo?.toString() || "",
+  );
+  const [sintomas, setSintomas] = useState(registro?.sintomas || "");
+  const [estadoAnimo, setEstadoAnimo] = useState(registro?.estado_animo || "");
+  const [notas, setNotas] = useState(registro?.notas || "");
+  const [loading, setLoading] = useState(false);
+
+  const validar = () => {
+    if (!fecha) {
+      Alert.alert("Error", "La fecha es obligatoria");
+      return false;
+    }
+    if (!semana) {
+      Alert.alert("Error", "La semana de embarazo es obligatoria");
+      return false;
+    }
+    const semanaNum = parseInt(semana);
+    if (isNaN(semanaNum) || semanaNum < 1 || semanaNum > 42) {
+      Alert.alert("Error", "La semana debe ser un número entre 1 y 42");
+      return false;
+    }
+    const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!fechaRegex.test(fecha)) {
+      Alert.alert("Error", "La fecha debe tener el formato AAAA-MM-DD");
+      return false;
+    }
+    return true;
+  };
+
+  const handleGuardar = async () => {
+    if (!validar()) return;
+    setLoading(true);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const datos = {
+      fecha,
+      semana_embarazo: parseInt(semana),
+      sintomas,
+      estado_animo: estadoAnimo,
+      notas,
+      user_id: user.id,
+    };
+
+    let error;
+    if (esEdicion) {
+      ({ error } = await supabase
+        .from("registros")
+        .update(datos)
+        .eq("id", registro.id));
+    } else {
+      ({ error } = await supabase.from("registros").insert(datos));
+    }
+
+    setLoading(false);
+    if (error) {
+      Alert.alert("Error", "No se pudo guardar el registro");
+    } else {
+      Alert.alert(
+        "Éxito",
+        esEdicion ? "Registro actualizado" : "Registro creado",
+      );
+      navigation.goBack();
+    }
+  };
+
+  return (
+    <ScrollView style={styles.container}>
+      <Text style={styles.title}>
+        {esEdicion ? "Editar Registro" : "Nuevo Registro"}
+      </Text>
+
+      <Text style={styles.label}>Fecha (AAAA-MM-DD) *</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Ej: 2024-03-15"
+        value={fecha}
+        onChangeText={setFecha}
+      />
+
+      <Text style={styles.label}>Semana de embarazo (1-42) *</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Ej: 20"
+        value={semana}
+        onChangeText={setSemana}
+        keyboardType="numeric"
+      />
+
+      <Text style={styles.label}>Estado de ánimo</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Ej: Feliz, Cansada, Ansiosa..."
+        value={estadoAnimo}
+        onChangeText={setEstadoAnimo}
+      />
+
+      <Text style={styles.label}>Síntomas</Text>
+      <TextInput
+        style={[styles.input, styles.multiline]}
+        placeholder="Ej: Náuseas, dolor de espalda..."
+        value={sintomas}
+        onChangeText={setSintomas}
+        multiline
+        numberOfLines={3}
+      />
+
+      <Text style={styles.label}>Notas adicionales</Text>
+      <TextInput
+        style={[styles.input, styles.multiline]}
+        placeholder="Escribe cualquier observación..."
+        value={notas}
+        onChangeText={setNotas}
+        multiline
+        numberOfLines={4}
+      />
+
+      {loading ? (
+        <ActivityIndicator
+          size="large"
+          color="#e91e8c"
+          style={{ marginTop: 20 }}
+        />
+      ) : (
+        <TouchableOpacity style={styles.button} onPress={handleGuardar}>
+          <Text style={styles.buttonText}>
+            {esEdicion ? "Actualizar" : "Guardar"}
+          </Text>
+        </TouchableOpacity>
+      )}
+
+      <TouchableOpacity
+        style={styles.buttonOutline}
+        onPress={() => navigation.goBack()}
+      >
+        <Text style={styles.buttonOutlineText}>Cancelar</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#fff0f6", padding: 24 },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#c2185b",
+    marginBottom: 24,
+    marginTop: 40,
+  },
+  label: { fontSize: 14, fontWeight: "bold", color: "#555", marginBottom: 6 },
+  input: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#f48fb1",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 16,
+    fontSize: 16,
+  },
+  multiline: { height: 90, textAlignVertical: "top" },
+  button: {
+    backgroundColor: "#e91e8c",
+    padding: 16,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 12,
+    marginTop: 8,
+  },
+  buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+  buttonOutline: {
+    borderWidth: 2,
+    borderColor: "#e91e8c",
+    padding: 16,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 40,
+  },
+  buttonOutlineText: { color: "#e91e8c", fontWeight: "bold", fontSize: 16 },
+});
