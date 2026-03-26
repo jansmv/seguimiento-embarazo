@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import React, { useEffect, useState } from "react";
 import { supabase } from "../supabase";
 
+import DetalleRegistroScreen from "../screens/DetalleRegistroScreen";
 import FormularioRegistroScreen from "../screens/FormularioRegistroScreen";
 import HomeScreen from "../screens/HomeScreen";
 import LoginScreen from "../screens/LoginScreen";
@@ -37,6 +38,10 @@ export default function AppNavigator() {
           <Stack.Screen
             name="FormularioRegistro"
             component={FormularioRegistroScreen}
+          />
+          <Stack.Screen
+            name="DetalleRegistro"
+            component={DetalleRegistroScreen}
           />
         </>
       ) : (
