@@ -108,16 +108,28 @@ export default function FormularioRegistroScreen({ navigation, route }) {
         <Text style={styles.dateButtonText}>📅 {fechaFormateada}</Text>
       </TouchableOpacity>
       {mostrarPicker && (
-        <DateTimePicker
-          value={fecha}
-          mode="date"
-          display={Platform.OS === "ios" ? "spinner" : "default"}
-          onChange={(event, selectedDate) => {
-            setMostrarPicker(Platform.OS === "ios");
-            if (selectedDate) setFecha(selectedDate);
-            if (Platform.OS === "android") setMostrarPicker(false);
-          }}
-        />
+        <View style={styles.pickerContainer}>
+          <DateTimePicker
+            value={fecha}
+            mode="date"
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            onChange={(event, selectedDate) => {
+              if (selectedDate) setFecha(selectedDate);
+              if (Platform.OS === "android") setMostrarPicker(false);
+            }}
+            themeVariant="light"
+            textColor="#000000"
+            accentColor="#e91e8c"
+          />
+          {Platform.OS === "ios" && (
+            <TouchableOpacity
+              style={styles.pickerDone}
+              onPress={() => setMostrarPicker(false)}
+            >
+              <Text style={styles.pickerDoneText}>Listo</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       )}
 
       <Text style={styles.label}>Semana de embarazo (1-42) *</Text>
@@ -223,9 +235,19 @@ const styles = StyleSheet.create({
     borderColor: "#f48fb1",
     borderRadius: 10,
     padding: 12,
-    marginBottom: 16,
+    marginBottom: 8,
   },
   dateButtonText: { fontSize: 16, color: "#333" },
+  pickerContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#f48fb1",
+    overflow: "hidden",
+  },
+  pickerDone: { backgroundColor: "#e91e8c", padding: 12, alignItems: "center" },
+  pickerDoneText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
   emojiContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
